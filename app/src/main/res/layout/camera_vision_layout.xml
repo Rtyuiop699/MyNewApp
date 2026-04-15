@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0A0A0A">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/camera_container"
+        android:layout_width="match_parent"
+        android:layout_height="350dp"
+        android:layout_margin="10dp"
+        android:layout_centerInParent="true"
+        app:cardCornerRadius="15dp"
+        app:cardBackgroundColor="#000"
+        xmlns:app="http://schemas.android.com/apk/res-auto">
+
+        <androidx.camera.view.PreviewView
+            android:id="@+id/previewView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <com.saber.supervc.OverlayView
+            android:id="@+id/overlayView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#4000D4FF"
+            android:layout_marginTop="50dp"/>
+    </androidx.cardview.widget.CardView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/camera_container"
+        android:layout_margin="10dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SYSTEM_ANALYSIS_LOG:"
+            android:textColor="#00D4FF"
+            android:textSize="10sp"
+            android:fontFamily="monospace" />
+
+        <TextView
+            android:id="@+id/tv_console_logs"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:background="#1100D4FF"
+            android:padding="5dp"
+            android:text="> Initializing MediaPipe...\n> Searching for Arduino...\n> Status: Connected"
+            android:textColor="#00FF41"
+            android:textSize="12sp"
+            android:fontFamily="monospace" />
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"
+        android:text="SABER_VISION_ENGINE v1.0"
+        android:textColor="#00D4FF"
+        android:textStyle="bold"
+        android:letterSpacing="0.2" />
+
+</RelativeLayout>
