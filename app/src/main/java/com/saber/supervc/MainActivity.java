@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean isVisionMode = false;
     private boolean isTerminalMode = false;
     private static boolean hasShownWelcome = false;
-
+    private int lastFingers = -1;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -233,21 +233,31 @@ public class MainActivity extends AppCompatActivity {
         }, ContextCompat.getMainExecutor(this));
     }
 
-    private void returnLivestreamResult(HandLandmarkerResult result, MPImage image) {
-        if (isVisionMode) {
-            runOnUiThread(() -> {
-                if (overlayView != null) {
-                    overlayView.setResults(result);
-                }
+    
+private void returnLivestreamResult(HandLandmarkerResult result, MPImage image) {
+    if (isVisionMode) {
+        runOnUiThread(() -> {
 
-                if (result.landmarks() != null && !result.landmarks().isEmpty()) {
-                    int fingers = countFingers(result);
-                    updateLogs("> Hand detected: " + fingers + " finger(s)");
+            if (overlayView != null) {
+                overlayView.setResults(result);
+            }
+
+            if (result.landmarks() != null && !result.landmarks().isEmpty()) {
+
+                int fingers = countFingers(result);
+
+                if (fingers != lastFingers) {
+                    lastFingers = fingers;
+
+                    String msg = "Hand State Changed: " + fingers + " finger(s)";
+                    updateLogs(msg);
+
                     LogicInterpreter.evaluate(fingers, currentScript, serialManager);
                 }
-            });
-        }
+            }
+        });
     }
+}
 
     private int countFingers(HandLandmarkerResult result) {
         return 1;
