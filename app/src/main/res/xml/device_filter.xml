@@ -1,14 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- تعريف أجهزة أردوينو أو أي جهاز USB تريد دعمه -->
-    <!-- يمكنك تعديل vendorId و productId حسب نوع الأردوينو لديك -->
-
-    <!-- مثال: Arduino Uno -->
-    <usb-device vendor-id="9025" product-id="67" />
-
-    <!-- مثال: Arduino Mega 2560 -->
-    <usb-device vendor-id="9025" product-id="66" />
-
-    <!-- مثال: CH340/CH341 USB-Serial (شائع في بعض الأردوينو الصيني) -->
+    <!-- تعريف شريحة CH340/CH341 المستخدمة في الأردوينو الصيني -->
     <usb-device vendor-id="6790" product-id="29987" />
 </resources>
