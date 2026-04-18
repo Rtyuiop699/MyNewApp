@@ -1,40 +1,34 @@
-# 🧠 Saber Vision Engine
+# SuperVC - Vision & Control App
 
-An advanced Android-based computer vision system that uses MediaPipe hand tracking to control Arduino devices in real time using gesture recognition and a built-in scripting engine.
+SuperVC هو تطبيق أندرويد يجمع بين **رؤية الكمبيوتر (Computer Vision)** باستخدام مكتبة **MediaPipe** وبين التحكم في الأجهزة الخارجية عبر **Arduino**.  
+يتيح التطبيق للمستخدم التفاعل مع الأجهزة باستخدام **إشارات اليد**، بالإضافة إلى واجهة طرفية (Terminal) لكتابة منطق مخصص للتحكم.
+
+## المزايا الرئيسية
+- **التعرف على اليد والإيماءات** باستخدام MediaPipe HandLandmarker.
+- **التحكم في Arduino عبر USB OTG** باستخدام SerialManager.
+- **لوحة تحكم (Dashboard)** سهلة الاستخدام للتنقل بين الأوضاع.
+- **وضع الرؤية (Vision Mode)**: تشغيل الكاميرا وتحليل اليد وعرض النتائج مباشرة.
+- **وضع الطرفية (Terminal Mode)**: كتابة وحفظ سكربتات منطقية للتحكم في الأجهزة.
+- **تسجيل الأحداث (Console Logs)** لمتابعة حالة الكاميرا، النموذج، والاتصال بالأردوينو.
+
+## طريقة العمل
+1. عند تشغيل التطبيق يظهر **شاشة ترحيبية** ثم لوحة التحكم.
+2. يمكن اختيار:
+   - **Vision Mode**: تشغيل الكاميرا وتحليل اليد، ثم إرسال أوامر للأردوينو بناءً على عدد الأصابع المكتشفة.
+   - **Terminal Mode**: كتابة منطق مخصص (Script) لتفسير الإيماءات وربطها بالأوامر.
+3. التطبيق يسجل جميع الأحداث في وحدة Console لمتابعة الأداء.
+
+## المتطلبات
+- جهاز أندرويد يدعم **CameraX**.
+- مكتبة **MediaPipe HandLandmarker** مدمجة في المشروع.
+- كابل **USB OTG** للاتصال بالأردوينو.
+- صلاحية الكاميرا (Camera Permission).
+
+## الاستخدامات المحتملة
+- التحكم في الروبوتات أو الأجهزة المنزلية عبر إشارات اليد.
+- بناء واجهات تفاعلية تعتمد على الإيماءات.
+- مشاريع تعليمية تجمع بين **Android + Computer Vision + IoT**.
 
 ---
 
-## ✨ Features
-
-- ✋ Real-time hand tracking using MediaPipe
-- 🧠 Finger gesture recognition system
-- 🔌 Arduino control via USB OTG serial communication
-- 📜 Built-in scripting terminal for custom logic
-- ⚡ Automatic APK build using GitHub Actions
-- 📊 Live system logs inside the application
-- 🎯 Gesture-based command execution
-
----
-
-## 📦 GitHub Actions Build System
-
-Every push triggers automatic build:
-
-- Build Android APK
-- Upload artifact to GitHub Actions
-
----
-
-## 📥 Installation
-
-```bash
-git clone https://github.com/USERNAME/MyNewApp.git
-📌 Requirements
-Android 9+
-USB OTG support
-Camera permission
-Good lighting for hand tracking
-👨‍💻 Author
-Developed by Saber
-📄 License
-Educational and experimental project. 
+✨ هذا المشروع يمزج بين الذكاء الاصطناعي والتحكم المادي، ليقدم تجربة فريدة في التفاعل مع الأجهزة باستخدام اليد فقط.
