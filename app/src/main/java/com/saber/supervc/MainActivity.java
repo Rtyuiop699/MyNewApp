@@ -49,8 +49,8 @@ public class MainActivity extends AppCompatActivity {
     private PreviewView previewView;
     private OverlayView overlayView;
     private TextView tvConsoleLogs;
-    private EditText etCommandInput;
-    private Button btnSend;
+    private EditText logicInput;
+    private Button btnSaveLogic;
 
     private HandLandmarker handLandmarker;
     private ExecutorService backgroundExecutor;
@@ -67,6 +67,15 @@ public class MainActivity extends AppCompatActivity {
 
         backgroundExecutor = Executors.newSingleThreadExecutor();
         serialManager = new SerialManager();
+
+        // إعداد مستمع لاستقبال البيانات من الأردوينو وعرضها في الـ Console
+        serialManager.setOnDataReceivedListener(data -> {
+            runOnUiThread(() -> {
+                if (tvConsoleLogs != null) {
+                    tvConsoleLogs.append("\nRDX: " + data.trim());
+                }
+            });
+        });
 
         setupHandLandmarker();
 
@@ -118,11 +127,10 @@ public class MainActivity extends AppCompatActivity {
         isVisionMode = true;
         setContentView(R.layout.cameravisionlayout);
         
-        // تعريف العناصر داخل واجهة الكاميرا
-        previewView = findViewById(R.id.preview_view);
-        overlayView = findViewById(R.id.overlay_view);
+        previewView = findViewById(R.id.previewView);
+        overlayView = findViewById(R.id.overlayView);
+        tvConsoleLogs = findViewById(R.id.tv_console_logs);
         
-        // هنا يمكنك إضافة كود تشغيل الكاميرا CameraX
         startCamera();
     }
 
@@ -130,24 +138,25 @@ public class MainActivity extends AppCompatActivity {
         isTerminalMode = true;
         setContentView(R.layout.terminal_layout);
         
-        // تعريف العناصر داخل واجهة التيرمينال
-        tvConsoleLogs = findViewById(R.id.tv_console_logs);
-        etCommandInput = findViewById(R.id.et_command_input);
-        btnSend = findViewById(R.id.btn_send);
+        logicInput = findViewById(R.id.logic_input);
+        btnSaveLogic = findViewById(R.id.btn_save_logic);
         
-        btnSend.setOnClickListener(v -> {
-            String cmd = etCommandInput.getText().toString();
-            if (!cmd.isEmpty() && serialManager != null) {
-                serialManager.write(cmd);
-                tvConsoleLogs.append("\nSent: " + cmd);
-                etCommandInput.setText("");
-            }
-        });
+        if (btnSaveLogic != null) {
+            btnSaveLogic.setOnClickListener(v -> {
+                String logic = logicInput.getText().toString();
+                if (!logic.isEmpty() && serialManager != null && serialManager.isConnected()) {
+                    serialManager.sendCommand(logic); 
+                    Toast.makeText(this, "Logic Sent to Arduino", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Arduino not connected", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
     }
 
     private void startCamera() {
-        // منطق تشغيل CameraX وربطها بـ handLandmarker
-        Log.d("SaberVC", "Camera Started");
+        Log.d("SaberVC", "Starting CameraX implementation...");
+        // هنا يتم إضافة كود ProcessCameraProvider لاحقاً
     }
 
     private void requestUsbPermission() {
@@ -170,7 +179,7 @@ public class MainActivity extends AppCompatActivity {
                 UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
                 if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                     if (device != null && serialManager.open(context)) {
-                        Toast.makeText(context, "Arduino Connected!", Toast.LENGTH_SHORT).show();
+                        Log.d("SaberVC", "USB Permission Granted & Port Opened");
                     }
                 }
             }
@@ -193,13 +202,13 @@ public class MainActivity extends AppCompatActivity {
 
                 handLandmarker = HandLandmarker.createFromOptions(this, options);
             } catch (Exception e) {
-                Log.e("SaberVC", "HandLandmarker failed", e);
+                Log.e("SaberVC", "MediaPipe Init Error", e);
             }
         });
     }
 
     private void returnLivestreamResult(HandLandmarkerResult result, MPImage image) {
-        // معالجة النتائج وإرسالها للأردوينو
+        // منطق معالجة النقاط وإرسال الأوامر عبر serialManager.sendCommand()
     }
 
     @Override
