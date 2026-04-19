@@ -63,8 +63,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
-        // طلب إذن الكاميرا عند البداية لضمان عملها فور الدخول للوضع
+
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
         }
@@ -76,7 +75,6 @@ public class MainActivity extends AppCompatActivity {
 
         setupHandLandmarker();
 
-        // إعداد استقبال بيانات الـ USB
         IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(usbReceiver, filter, Context.RECEIVER_EXPORTED);
@@ -123,13 +121,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void openVisionMode() {
         isVisionMode = true;
-        setContentView(R.layout.cameravisionlayout);
-        
+        setContentView(R.layout.camera_vision_layout);
+
         previewView = findViewById(R.id.previewView);
         overlayView = findViewById(R.id.overlayView);
         tvConsoleLogs = findViewById(R.id.tv_console_logs);
-        
-        // تشغيل الكاميرا فور تحميل الواجهة
+
         startCamera();
     }
 
@@ -171,12 +168,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.terminal_layout);
         logicInput = findViewById(R.id.logic_input);
         btnSaveLogic = findViewById(R.id.btn_save_logic);
-        
+
         if (btnSaveLogic != null) {
             btnSaveLogic.setOnClickListener(v -> {
                 String logic = logicInput.getText().toString();
                 if (!logic.isEmpty() && serialManager.isConnected()) {
-                    serialManager.sendCommand(logic); 
+                    serialManager.sendCommand(logic);
                     Toast.makeText(this, "Sent to Arduino", Toast.LENGTH_SHORT).show();
                 }
             });
@@ -216,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
                         .setRunningMode(RunningMode.LIVE_STREAM)
                         .setResultListener((result, image) -> {
                             if (overlayView != null && isVisionMode) {
-                                overlayView.setResults(result, image.getHeight(), image.getWidth());
+                                overlayView.setResults(result);
                                 runOnUiThread(() -> overlayView.invalidate());
                             }
                         })
