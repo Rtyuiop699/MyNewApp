@@ -49,18 +49,16 @@ public class MainActivity extends AppCompatActivity {
     private PreviewView previewView;
     private OverlayView overlayView;
     private TextView tvConsoleLogs;
-    private View welcomeOverlay;
-    private View dashboardLayout;
+    private EditText etCommandInput;
+    private Button btnSend;
 
     private HandLandmarker handLandmarker;
     private ExecutorService backgroundExecutor;
     private SerialManager serialManager;
 
-    private String currentScript = "";
     private boolean isVisionMode = false;
     private boolean isTerminalMode = false;
     private static boolean hasShownWelcome = false;
-    private int lastFingers = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,10 +68,8 @@ public class MainActivity extends AppCompatActivity {
         backgroundExecutor = Executors.newSingleThreadExecutor();
         serialManager = new SerialManager();
 
-        // تحميل نموذج MediaPipe
         setupHandLandmarker();
 
-        // تسجيل الـ BroadcastReceiver الخاص بالـ USB
         IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(usbReceiver, filter, Context.RECEIVER_EXPORTED);
@@ -81,7 +77,6 @@ public class MainActivity extends AppCompatActivity {
             registerReceiver(usbReceiver, filter);
         }
 
-        // طلب إذن USB عند بدء التطبيق
         requestUsbPermission();
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -101,8 +96,8 @@ public class MainActivity extends AppCompatActivity {
         isTerminalMode = false;
         setContentView(R.layout.activity_main);
 
-        welcomeOverlay = findViewById(R.id.welcome_overlay);
-        dashboardLayout = findViewById(R.id.dashboard_layout);
+        View welcomeOverlay = findViewById(R.id.welcome_overlay);
+        View dashboardLayout = findViewById(R.id.dashboard_layout);
 
         if (hasShownWelcome) {
             if (welcomeOverlay != null) welcomeOverlay.setVisibility(View.GONE);
@@ -117,6 +112,42 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.card_mediapipe).setOnClickListener(v -> openVisionMode());
         findViewById(R.id.card_terminal).setOnClickListener(v -> openTerminalMode());
+    }
+
+    private void openVisionMode() {
+        isVisionMode = true;
+        setContentView(R.layout.cameravisionlayout);
+        
+        // تعريف العناصر داخل واجهة الكاميرا
+        previewView = findViewById(R.id.preview_view);
+        overlayView = findViewById(R.id.overlay_view);
+        
+        // هنا يمكنك إضافة كود تشغيل الكاميرا CameraX
+        startCamera();
+    }
+
+    private void openTerminalMode() {
+        isTerminalMode = true;
+        setContentView(R.layout.terminal_layout);
+        
+        // تعريف العناصر داخل واجهة التيرمينال
+        tvConsoleLogs = findViewById(R.id.tv_console_logs);
+        etCommandInput = findViewById(R.id.et_command_input);
+        btnSend = findViewById(R.id.btn_send);
+        
+        btnSend.setOnClickListener(v -> {
+            String cmd = etCommandInput.getText().toString();
+            if (!cmd.isEmpty() && serialManager != null) {
+                serialManager.write(cmd);
+                tvConsoleLogs.append("\nSent: " + cmd);
+                etCommandInput.setText("");
+            }
+        });
+    }
+
+    private void startCamera() {
+        // منطق تشغيل CameraX وربطها بـ handLandmarker
+        Log.d("SaberVC", "Camera Started");
     }
 
     private void requestUsbPermission() {
@@ -138,17 +169,9 @@ public class MainActivity extends AppCompatActivity {
             if (ACTION_USB_PERMISSION.equals(action)) {
                 UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
                 if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
-                    if (device != null) {
-                        Log.d("MainActivity", "USB Permission Granted for device: " + device.getDeviceName());
-                        if (serialManager.open(context)) {
-                            Toast.makeText(context, "Arduino Connected!", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(context, "Failed to connect Arduino", Toast.LENGTH_SHORT).show();
-                        }
+                    if (device != null && serialManager.open(context)) {
+                        Toast.makeText(context, "Arduino Connected!", Toast.LENGTH_SHORT).show();
                     }
-                } else {
-                    Log.d("MainActivity", "USB Permission Denied");
-                    Toast.makeText(context, "USB Permission Denied", Toast.LENGTH_SHORT).show();
                 }
             }
         }
@@ -166,50 +189,25 @@ public class MainActivity extends AppCompatActivity {
                         .setRunningMode(RunningMode.LIVE_STREAM)
                         .setResultListener(this::returnLivestreamResult)
                         .setNumHands(2)
-                        .setMinHandDetectionConfidence(0.5f)
-                        .setMinTrackingConfidence(0.5f)
-                        .setMinHandPresenceConfidence(0.5f)
                         .build();
 
                 handLandmarker = HandLandmarker.createFromOptions(this, options);
             } catch (Exception e) {
-                Log.e("SaberVC", "HandLandmarker failed to load", e);
+                Log.e("SaberVC", "HandLandmarker failed", e);
             }
         });
     }
 
-    private void openVisionMode() {
-        isVisionMode = true;
-        // هنا يتم تحميل واجهة الرؤية وتفعيل الكاميرا
-        Toast.makeText(this, "Vision Mode Started", Toast.LENGTH_SHORT).show();
-    }
-
-    private void openTerminalMode() {
-        isTerminalMode = true;
-        // هنا يتم تحميل واجهة Terminal
-        Toast.makeText(this, "Terminal Mode Started", Toast.LENGTH_SHORT).show();
-    }
-
     private void returnLivestreamResult(HandLandmarkerResult result, MPImage image) {
-        // منطق معالجة النتائج وإرسال البيانات للـ Arduino
+        // معالجة النتائج وإرسالها للأردوينو
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        try {
-            unregisterReceiver(usbReceiver);
-        } catch (Exception e) {
-            Log.e("MainActivity", "Receiver not registered");
-        }
+        try { unregisterReceiver(usbReceiver); } catch (Exception e) {}
         if (backgroundExecutor != null) backgroundExecutor.shutdown();
         if (serialManager != null) serialManager.close();
-        if (handLandmarker != null) {
-            try {
-                handLandmarker.close();
-            } catch (Exception e) {
-                Log.e("SaberVC", "Error closing handLandmarker", e);
-            }
-        }
+        if (handLandmarker != null) handLandmarker.close();
     }
 }
