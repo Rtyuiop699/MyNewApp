@@ -125,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void openVisionMode() {
         isVisionMode = true;
-        setContentView(R.layout.cameravisionlayout);
+        setContentView(R.layout.camera_vision_layout);
         
         previewView = findViewById(R.id.previewView);
         overlayView = findViewById(R.id.overlayView);
