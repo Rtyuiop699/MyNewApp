@@ -135,7 +135,34 @@ public class MainActivity extends AppCompatActivity {
 
         startCamera();
     }
+private int countFingers(NormalizedLandmarkList landmarks) {
+    int count = 0;
 
+    // الإبهام: مقارنة الإحداثي السيني X لطرف الإبهام مع المفصل
+    float thumbTipX = landmarks.get(4).getX();
+    float thumbIpX = landmarks.get(3).getX();
+    // إذا كان الإبهام يتجه للخارج
+    if (Math.abs(thumbTipX - thumbIpX) > 0.04) {
+        count++;
+    }
+
+    // الأصابع الأربعة (السبابة، الوسطى، البنصر، الخنصر)
+    // مقارنة الإحداثي الصادي Y (ملاحظة: Y ينقص كلما اتجهنا للأعلى في الشاشة)
+    int[] fingerTipIds = {8, 12, 16, 20};  // أطراف الأصابع
+    int[] fingerPipIds = {6, 10, 14, 18};  // مفاصل الأصابع المتوسطة
+
+    for (int i = 0; i < fingerTipIds.length; i++) {
+        float tipY = landmarks.get(fingerTipIds[i]).getY();
+        float pipY = landmarks.get(fingerPipIds[i]).getY();
+
+        if (tipY < pipY) { // الطرف أعلى من المفصل
+            count++;
+        }
+    }
+
+    return count;
+}
+    
     private void startCamera() {
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
         cameraProviderFuture.addListener(() -> {
