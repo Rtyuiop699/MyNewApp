@@ -248,33 +248,93 @@ private int countFingers(NormalizedLandmarkList landmarks) {
     }
 
     private void setupHandLandmarker() {
-        backgroundExecutor.execute(() -> {
-            try {
-                BaseOptions baseOptions = BaseOptions.builder()
-                        .setModelAssetPath("hand_landmarker.task")
-                        .build();
+    backgroundExecutor.execute(() -> {
+        try {
+            BaseOptions baseOptions = BaseOptions.builder()
+                    .setModelAssetPath("hand_landmarker.task")
+                    .build();
 
-                HandLandmarker.HandLandmarkerOptions options = HandLandmarker.HandLandmarkerOptions.builder()
-                        .setBaseOptions(baseOptions)
-                        .setRunningMode(RunningMode.LIVE_STREAM)
-                        .setResultListener((result, image) -> {
-                            // UI update safely dispatched
-                            runOnUiThread(() -> {
-                                if (overlayView != null && isVisionMode) {
-                                    overlayView.setResults(result);
-                                    overlayView.invalidate();
+            HandLandmarker.HandLandmarkerOptions options = HandLandmarker.HandLandmarkerOptions.builder()
+                    .setBaseOptions(baseOptions)
+                    .setRunningMode(RunningMode.LIVE_STREAM)
+                    .setResultListener((result, image) -> {
+                        // تحديث الواجهة على الخيط الرئيسي
+                        runOnUiThread(() -> {
+                            if (overlayView != null && isVisionMode) {
+                                overlayView.setResults(result);
+                                overlayView.invalidate();
+
+                                // التحقق من كشف اليد وحساب الأصابع
+                                if (result != null && !result.landmarks().isEmpty()) {
+                                    // جلب نقاط اليد الأولى
+                                    var handLandmarks = result.landmarks().get(0);
+                                    
+                                    // حساب عدد الأصابع المفتوحة
+                                    int openFingers = countFingers(handLandmarks);
+
+                                    // تحديث النص في أسفل الشاشة (System Analysis Log)
+                                    if (tvConsoleLogs != null) {
+                                        String logText = "> Initializing MediaPipe...\n" +
+                                                         "> Searching for Arduino...\n" +
+                                                         "> Status: Connected\n" +
+                                                         "> Fingers Detected: " + openFingers;
+                                        tvConsoleLogs.setText(logText);
+                                    }
+
+                                    // إرسال عدد الأصابع تلقائياً لـ Arduino
+                                    if (serialManager != null && serialManager.isConnected()) {
+                                        serialManager.sendCommand(String.valueOf(openFingers));
+                                    }
+                                } else {
+                                    // في حال عدم وجود يد أمام الكاميرا
+                                    if (tvConsoleLogs != null) {
+                                        String logText = "> Initializing MediaPipe...\n" +
+                                                         "> Searching for Arduino...\n" +
+                                                         "> Status: Connected\n" +
+                                                         "> Fingers Detected: 0 (No hand)";
+                                        tvConsoleLogs.setText(logText);
+                                    }
                                 }
-                            });
-                        })
-                        .setNumHands(2)
-                        .build();
+                            }
+                        });
+                    })
+                    .setNumHands(2)
+                    .build();
 
-                handLandmarker = HandLandmarker.createFromOptions(this, options);
-            } catch (Exception e) {
-                Log.e(TAG, "MediaPipe Initialization Error: " + e.getMessage(), e);
-            }
-        });
+            handLandmarker = HandLandmarker.createFromOptions(this, options);
+        } catch (Exception e) {
+            Log.e(TAG, "MediaPipe Initialization Error: " + e.getMessage(), e);
+        }
+    });
+}
+
+// دالة مساعدة لحساب الأصابع المفتوحة (توضع داخل كلاس MainActivity)
+private int countFingers(java.util.List<com.google.mediapipe.tasks.components.containers.NormalizedLandmark> landmarks) {
+    int count = 0;
+
+    // 1. فحص الإبهام (مقارنة أفقية X بين نقطة الطرف ونقطة المفصل)
+    float thumbTipX = landmarks.get(4).x();
+    float thumbIpX = landmarks.get(3).x();
+    if (Math.abs(thumbTipX - thumbIpX) > 0.04) {
+        count++;
     }
+
+    // 2. فحص بقية الأصابع (مقارنة عمودية Y: تكون Y أقل عند الصعود للأعلى)
+    int[] fingerTipIds = {8, 12, 16, 20}; // أطراف السبابة، الوسطى، البنصر، الخنصر
+    int[] fingerPipIds = {6, 10, 14, 18}; // المفاصل المقابلة لها
+
+    for (int i = 0; i < fingerTipIds.length; i++) {
+        float tipY = landmarks.get(fingerTipIds[i]).y();
+        float pipY = landmarks.get(fingerPipIds[i]).y();
+
+        if (tipY < pipY) { // إذا كان طرف الأصبع أعلى من مفصله
+            count++;
+        }
+    }
+
+    return count;
+        }
+                                       
 
     private void registerUsbReceiver() {
         IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
