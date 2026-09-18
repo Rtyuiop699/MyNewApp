@@ -39,6 +39,7 @@
             android:layout_height="wrap_content"
             android:columnCount="2">
 
+            <!-- بطاقة إيماءات اليد -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -64,6 +65,7 @@
                     android:layout_marginTop="8dp" android:textStyle="bold" />
             </LinearLayout>
 
+            <!-- بطاقة المبرمج (تم عكس الألوان) -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -77,15 +79,41 @@
                     android:layout_height="80dp"
                     app:cardCornerRadius="20dp"
                     app:cardElevation="4dp"
-                    app:cardBackgroundColor="#F1F5F9">
+                    app:cardBackgroundColor="#1E293B">
                     <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent">
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text=">_" android:textColor="#1E293B" android:textSize="22sp"
+                            android:text=">_" android:textColor="#FFFFFF" android:textSize="22sp"
                             android:textStyle="bold" android:layout_gravity="center"/>
                     </FrameLayout>
                 </androidx.cardview.widget.CardView>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                     android:text="المبرمج" android:textColor="#475569" android:textSize="12sp"
+                    android:layout_marginTop="8dp" android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- بطاقة نظام المراقبة (الجديدة) -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:layout_margin="10dp">
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/card_surveillance"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="4dp"
+                    app:cardBackgroundColor="#FEF3C7">
+                    <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="CCTV" android:textColor="#D97706" android:textSize="20sp"
+                            android:textStyle="bold" android:layout_gravity="center"/>
+                    </FrameLayout>
+                </androidx.cardview.widget.CardView>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="نظام المراقبة" android:textColor="#475569" android:textSize="12sp"
                     android:layout_marginTop="8dp" android:textStyle="bold" />
             </LinearLayout>
 
@@ -114,3 +142,4 @@
     </LinearLayout>
 
 </RelativeLayout>
+                        
