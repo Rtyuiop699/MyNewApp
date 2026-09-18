@@ -1,8 +1,5 @@
 package com.saber.supervc;
 
-import com.google.mediapipe.tasks.components.containers.NormalizedLandmark;
-import java.util.List;
-
 import android.Manifest;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -22,6 +19,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,11 +38,13 @@ import androidx.core.content.ContextCompat;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.mediapipe.framework.image.BitmapImageBuilder;
 import com.google.mediapipe.framework.image.MPImage;
+import com.google.mediapipe.tasks.components.containers.NormalizedLandmark;
 import com.google.mediapipe.tasks.core.BaseOptions;
 import com.google.mediapipe.tasks.vision.core.RunningMode;
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarker;
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarkerResult;
 
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -59,15 +59,14 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvConsoleLogs;
     private EditText logicInput;
     private Button btnSaveLogic;
+    private ImageButton btnSwitchCamera;
 
     private HandLandmarker handLandmarker;
     private ExecutorService backgroundExecutor;
     private SerialManager serialManager;
     private ProcessCameraProvider cameraProvider;
-   // متغير لمتابعة الكاميرا الحالية (الافتراضي: الأمامية)
-private CameraSelector cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
-private ImageButton btnSwitchCamera;
-    
+    private CameraSelector cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
+
     private boolean isVisionMode = false;
     private boolean isTerminalMode = false;
     private static boolean hasShownWelcome = false;
@@ -76,7 +75,6 @@ private ImageButton btnSwitchCamera;
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Check for permissions
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_REQUEST_CODE);
         }
@@ -90,7 +88,6 @@ private ImageButton btnSwitchCamera;
 
         showDashboard();
 
-        // Handle Back Press
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -131,74 +128,30 @@ private ImageButton btnSwitchCamera;
     }
 
     private void openVisionMode() {
-    isVisionMode = true;
-    isTerminalMode = false;
-    setContentView(R.layout.camera_vision_layout);
+        isVisionMode = true;
+        isTerminalMode = false;
+        setContentView(R.layout.camera_vision_layout);
 
-    previewView = findViewById(R.id.previewView);
-    overlayView = findViewById(R.id.overlayView);
-    tvConsoleLogs = findViewById(R.id.tv_console_logs);
+        previewView = findViewById(R.id.previewView);
+        overlayView = findViewById(R.id.overlayView);
+        tvConsoleLogs = findViewById(R.id.tv_console_logs);
+        btnSwitchCamera = findViewById(R.id.btn_switch_camera);
 
-    // ربط زر التبديل والحدث الخاص به
-    android.widget.ImageButton btnSwitchCamera = findViewById(R.id.btn_switch_camera);
-    if (btnSwitchCamera != null) {
-        btnSwitchCamera.setOnClickListener(v -> switchCamera());
-    }
-
-    startCamera();
-}
-
-// دالة التبديل بين الكاميرات وإعادة تشغيل البث
-private void switchCamera() {
-    if (cameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA) {
-        cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
-    } else {
-        cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
-    }
-    
-    // إعادة بناء الكاميرا مع الاتجاه الجديد
-    startCamera();
-}
-    
-private int countFingers(NormalizedLandmarkList landmarks) {
-    int count = 0;
-
-    // الإبهام: مقارنة الإحداثي السيني X لطرف الإبهام مع المفصل
-    float thumbTipX = landmarks.get(4).getX();
-    float thumbIpX = landmarks.get(3).getX();
-    // إذا كان الإبهام يتجه للخارج
-    if (Math.abs(thumbTipX - thumbIpX) > 0.04) {
-        count++;
-    }
-
-    // الأصابع الأربعة (السبابة، الوسطى، البنصر، الخنصر)
-    // مقارنة الإحداثي الصادي Y (ملاحظة: Y ينقص كلما اتجهنا للأعلى في الشاشة)
-    int[] fingerTipIds = {8, 12, 16, 20};  // أطراف الأصابع
-    int[] fingerPipIds = {6, 10, 14, 18};  // مفاصل الأصابع المتوسطة
-
-    for (int i = 0; i < fingerTipIds.length; i++) {
-        float tipY = landmarks.get(fingerTipIds[i]).getY();
-        float pipY = landmarks.get(fingerPipIds[i]).getY();
-
-        if (tipY < pipY) { // الطرف أعلى من المفصل
-            count++;
+        if (btnSwitchCamera != null) {
+            btnSwitchCamera.setOnClickListener(v -> switchCamera());
         }
+
+        startCamera();
     }
 
-    return count;
-}
- private void switchCamera() {
-    // التبديل بين الكاميرا الأمامية والخلفية
-    if (cameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA) {
-        cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
-    } else {
-        cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
+    private void switchCamera() {
+        if (cameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA) {
+            cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
+        } else {
+            cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
+        }
+        startCamera();
     }
-    
-    // إعادة تشغيل الكاميرا بالاتجاه الجديد
-    startCamera();
- }
-    
 
     private void startCamera() {
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
@@ -210,8 +163,6 @@ private int countFingers(NormalizedLandmarkList landmarks) {
                 if (previewView != null) {
                     preview.setSurfaceProvider(previewView.getSurfaceProvider());
                 }
-
-                CameraSelector cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
 
                 ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
                         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
@@ -238,8 +189,7 @@ private int countFingers(NormalizedLandmarkList landmarks) {
         try {
             Bitmap bitmap = image.toBitmap();
             int rotationDegrees = image.getImageInfo().getRotationDegrees();
-            
-            // Rotate bitmap if necessary to align frame correctly
+
             if (rotationDegrees != 0) {
                 Matrix matrix = new Matrix();
                 matrix.postRotate(rotationDegrees);
@@ -285,97 +235,84 @@ private int countFingers(NormalizedLandmarkList landmarks) {
     }
 
     private void setupHandLandmarker() {
-    backgroundExecutor.execute(() -> {
-        try {
-            BaseOptions baseOptions = BaseOptions.builder()
-                    .setModelAssetPath("hand_landmarker.task")
-                    .build();
+        backgroundExecutor.execute(() -> {
+            try {
+                BaseOptions baseOptions = BaseOptions.builder()
+                        .setModelAssetPath("hand_landmarker.task")
+                        .build();
 
-            HandLandmarker.HandLandmarkerOptions options = HandLandmarker.HandLandmarkerOptions.builder()
-                    .setBaseOptions(baseOptions)
-                    .setRunningMode(RunningMode.LIVE_STREAM)
-                    .setResultListener((result, image) -> {
-                        // تحديث الواجهة على الخيط الرئيسي
-                        runOnUiThread(() -> {
-                            if (overlayView != null && isVisionMode) {
-                                overlayView.setResults(result);
-                                overlayView.invalidate();
+                HandLandmarker.HandLandmarkerOptions options = HandLandmarker.HandLandmarkerOptions.builder()
+                        .setBaseOptions(baseOptions)
+                        .setRunningMode(RunningMode.LIVE_STREAM)
+                        .setResultListener((result, image) -> {
+                            runOnUiThread(() -> {
+                                if (overlayView != null && isVisionMode) {
+                                    overlayView.setResults(result);
+                                    overlayView.invalidate();
 
-                                // التحقق من كشف اليد وحساب الأصابع
-                                if (result != null && !result.landmarks().isEmpty()) {
-                                    // جلب نقاط اليد الأولى
-                                    var handLandmarks = result.landmarks().get(0);
-                                    
-                                    // حساب عدد الأصابع المفتوحة
-                                    int openFingers = countFingers(handLandmarks);
+                                    if (result != null && !result.landmarks().isEmpty()) {
+                                        List<NormalizedLandmark> handLandmarks = result.landmarks().get(0);
+                                        int openFingers = countFingers(handLandmarks);
 
-                                    // تحديث النص في أسفل الشاشة (System Analysis Log)
-                                    if (tvConsoleLogs != null) {
-                                        String logText = "> Initializing MediaPipe...\n" +
-                                                         "> Searching for Arduino...\n" +
-                                                         "> Status: Connected\n" +
-                                                         "> Fingers Detected: " + openFingers;
-                                        tvConsoleLogs.setText(logText);
-                                    }
+                                        if (tvConsoleLogs != null) {
+                                            String logText = "> Initializing MediaPipe...\n" +
+                                                             "> Searching for Arduino...\n" +
+                                                             "> Status: Connected\n" +
+                                                             "> Fingers Detected: " + openFingers;
+                                            tvConsoleLogs.setText(logText);
+                                        }
 
-                                    // إرسال عدد الأصابع تلقائياً لـ Arduino
-                                    if (serialManager != null && serialManager.isConnected()) {
-                                        serialManager.sendCommand(String.valueOf(openFingers));
-                                    }
-                                } else {
-                                    // في حال عدم وجود يد أمام الكاميرا
-                                    if (tvConsoleLogs != null) {
-                                        String logText = "> Initializing MediaPipe...\n" +
-                                                         "> Searching for Arduino...\n" +
-                                                         "> Status: Connected\n" +
-                                                         "> Fingers Detected: 0 (No hand)";
-                                        tvConsoleLogs.setText(logText);
+                                        if (serialManager != null && serialManager.isConnected()) {
+                                            serialManager.sendCommand(String.valueOf(openFingers));
+                                        }
+                                    } else {
+                                        if (tvConsoleLogs != null) {
+                                            String logText = "> Initializing MediaPipe...\n" +
+                                                             "> Searching for Arduino...\n" +
+                                                             "> Status: Connected\n" +
+                                                             "> Fingers Detected: 0 (No hand)";
+                                            tvConsoleLogs.setText(logText);
+                                        }
                                     }
                                 }
-                            }
-                        });
-                    })
-                    .setNumHands(2)
-                    .build();
+                            });
+                        })
+                        .setNumHands(2)
+                        .build();
 
-            handLandmarker = HandLandmarker.createFromOptions(this, options);
-        } catch (Exception e) {
-            Log.e(TAG, "MediaPipe Initialization Error: " + e.getMessage(), e);
-        }
-    });
-}
-
-// دالة مساعدة لحساب الأصابع المفتوحة (توضع داخل كلاس MainActivity)
-private int countFingers(List<NormalizedLandmark> landmarks) {
-    if (landmarks == null || landmarks.size() < 21) {
-        return 0; // حماية في حال عدم اكتمال النقاط
+                handLandmarker = HandLandmarker.createFromOptions(this, options);
+            } catch (Exception e) {
+                Log.e(TAG, "MediaPipe Initialization Error: " + e.getMessage(), e);
+            }
+        });
     }
 
-    int count = 0;
+    private int countFingers(List<NormalizedLandmark> landmarks) {
+        if (landmarks == null || landmarks.size() < 21) return 0;
 
-    // 1. الإبهام (مقارنة أفقية X بين الطرف X والمفصل)
-    float thumbTipX = landmarks.get(4).x();
-    float thumbIpX = landmarks.get(3).x();
-    if (Math.abs(thumbTipX - thumbIpX) > 0.04) {
-        count++;
-    }
+        int count = 0;
 
-    // 2. الأصابع الأربعة (مقارنة عمودية Y بين الطرف والمفصل)
-    int[] fingerTipIds = {8, 12, 16, 20};  // أطراف الأصابع
-    int[] fingerPipIds = {6, 10, 14, 18};  // المفاصل المتوسطة
-
-    for (int i = 0; i < fingerTipIds.length; i++) {
-        float tipY = landmarks.get(fingerTipIds[i]).y();
-        float pipY = landmarks.get(fingerPipIds[i]).y();
-
-        if (tipY < pipY) { // الطرف أعلى في الشاشة من المفصل
+        float thumbTipX = landmarks.get(4).x();
+        float thumbIpX = landmarks.get(3).x();
+        if (Math.abs(thumbTipX - thumbIpX) > 0.04) {
             count++;
         }
+
+        int[] fingerTipIds = {8, 12, 16, 20};
+        int[] fingerPipIds = {6, 10, 14, 18};
+
+        for (int i = 0; i < fingerTipIds.length; i++) {
+            float tipY = landmarks.get(fingerTipIds[i]).y();
+            float pipY = landmarks.get(fingerPipIds[i]).y();
+
+            if (tipY < pipY) {
+                count++;
+            }
+        }
+
+        return count;
     }
 
-    return count;
-}
-    
     private void registerUsbReceiver() {
         IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -430,5 +367,4 @@ private int countFingers(List<NormalizedLandmark> landmarks) {
             handLandmarker.close();
         }
     }
-    }
-    
+}
