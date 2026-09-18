@@ -1,5 +1,8 @@
 package com.saber.supervc;
 
+import com.google.mediapipe.tasks.components.containers.NormalizedLandmark;
+import java.util.List;
+
 import android.Manifest;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -309,33 +312,36 @@ private int countFingers(NormalizedLandmarkList landmarks) {
 }
 
 // دالة مساعدة لحساب الأصابع المفتوحة (توضع داخل كلاس MainActivity)
-private int countFingers(java.util.List<com.google.mediapipe.tasks.components.containers.NormalizedLandmark> landmarks) {
+private int countFingers(List<NormalizedLandmark> landmarks) {
+    if (landmarks == null || landmarks.size() < 21) {
+        return 0; // حماية في حال عدم اكتمال النقاط
+    }
+
     int count = 0;
 
-    // 1. فحص الإبهام (مقارنة أفقية X بين نقطة الطرف ونقطة المفصل)
+    // 1. الإبهام (مقارنة أفقية X بين الطرف X والمفصل)
     float thumbTipX = landmarks.get(4).x();
     float thumbIpX = landmarks.get(3).x();
     if (Math.abs(thumbTipX - thumbIpX) > 0.04) {
         count++;
     }
 
-    // 2. فحص بقية الأصابع (مقارنة عمودية Y: تكون Y أقل عند الصعود للأعلى)
-    int[] fingerTipIds = {8, 12, 16, 20}; // أطراف السبابة، الوسطى، البنصر، الخنصر
-    int[] fingerPipIds = {6, 10, 14, 18}; // المفاصل المقابلة لها
+    // 2. الأصابع الأربعة (مقارنة عمودية Y بين الطرف والمفصل)
+    int[] fingerTipIds = {8, 12, 16, 20};  // أطراف الأصابع
+    int[] fingerPipIds = {6, 10, 14, 18};  // المفاصل المتوسطة
 
     for (int i = 0; i < fingerTipIds.length; i++) {
         float tipY = landmarks.get(fingerTipIds[i]).y();
         float pipY = landmarks.get(fingerPipIds[i]).y();
 
-        if (tipY < pipY) { // إذا كان طرف الأصبع أعلى من مفصله
+        if (tipY < pipY) { // الطرف أعلى في الشاشة من المفصل
             count++;
         }
     }
 
     return count;
-        }
-                                       
-
+}
+    
     private void registerUsbReceiver() {
         IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
