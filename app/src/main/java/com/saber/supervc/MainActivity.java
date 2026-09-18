@@ -64,7 +64,10 @@ public class MainActivity extends AppCompatActivity {
     private ExecutorService backgroundExecutor;
     private SerialManager serialManager;
     private ProcessCameraProvider cameraProvider;
-
+   // متغير لمتابعة الكاميرا الحالية (الافتراضي: الأمامية)
+private CameraSelector cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
+private ImageButton btnSwitchCamera;
+    
     private boolean isVisionMode = false;
     private boolean isTerminalMode = false;
     private static boolean hasShownWelcome = false;
@@ -128,16 +131,35 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void openVisionMode() {
-        isVisionMode = true;
-        isTerminalMode = false;
-        setContentView(R.layout.camera_vision_layout);
+    isVisionMode = true;
+    isTerminalMode = false;
+    setContentView(R.layout.camera_vision_layout);
 
-        previewView = findViewById(R.id.previewView);
-        overlayView = findViewById(R.id.overlayView);
-        tvConsoleLogs = findViewById(R.id.tv_console_logs);
+    previewView = findViewById(R.id.previewView);
+    overlayView = findViewById(R.id.overlayView);
+    tvConsoleLogs = findViewById(R.id.tv_console_logs);
 
-        startCamera();
+    // ربط زر التبديل والحدث الخاص به
+    android.widget.ImageButton btnSwitchCamera = findViewById(R.id.btn_switch_camera);
+    if (btnSwitchCamera != null) {
+        btnSwitchCamera.setOnClickListener(v -> switchCamera());
     }
+
+    startCamera();
+}
+
+// دالة التبديل بين الكاميرات وإعادة تشغيل البث
+private void switchCamera() {
+    if (cameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA) {
+        cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
+    } else {
+        cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
+    }
+    
+    // إعادة بناء الكاميرا مع الاتجاه الجديد
+    startCamera();
+}
+    
 private int countFingers(NormalizedLandmarkList landmarks) {
     int count = 0;
 
@@ -165,7 +187,19 @@ private int countFingers(NormalizedLandmarkList landmarks) {
 
     return count;
 }
+ private void switchCamera() {
+    // التبديل بين الكاميرا الأمامية والخلفية
+    if (cameraSelector == CameraSelector.DEFAULT_FRONT_CAMERA) {
+        cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA;
+    } else {
+        cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA;
+    }
     
+    // إعادة تشغيل الكاميرا بالاتجاه الجديد
+    startCamera();
+ }
+    
+
     private void startCamera() {
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
         cameraProviderFuture.addListener(() -> {
